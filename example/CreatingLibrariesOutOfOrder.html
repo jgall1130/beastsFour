@@ -2,109 +2,110 @@
 <script> 
  
 (function () {
-  var libraryStorage = {};
-  
-  function librarySystem(libraryName, dependencies, callback) {
-    if (arguments.length > 1) {
-      libraryStorage[libraryName] = {
-        dependencies: dependencies,
-        callback: callback,
-        isLoaded: false
-      };
-    if (typeof libraryStorage[libraryName].dependencies === 'function') {
-      libraryStorage[libraryName] = {
-        dependencies: [],
-        callback: dependencies,
-        isLoaded: false
-      };
-    } 
-    } else if (typeof libraryStorage[libraryName] === 'undefined') {
-        throw new TypeError(libraryName + ' library not found.');
-    } else {
-      var library = libraryStorage[libraryName]; 
-      if (library.isLoaded === false) {
-        var activeDependency = library.dependencies.map(function(dependency) {
-        return librarySystem(dependency);
-        });
-        library.isLoaded = true;
-        library.result = library.callback.apply(null, activeDependency);
-      }
-        return library.result;
+    "use strict";
+    var libraryStorage = {};
+
+    function librarySystem(libraryName, dependencies, callback) {
+        if (arguments.length > 1) {
+            libraryStorage[libraryName] = {
+                dependencies: dependencies,
+                callback: callback,
+                isLoaded: false
+            };
+            if (typeof libraryStorage[libraryName].dependencies === "function") {
+                libraryStorage[libraryName] = {
+                    dependencies: [],
+                    callback: dependencies,
+                    isLoaded: false
+                };
+            }
+        } else if (libraryStorage[libraryName] === "undefined") {
+            throw new TypeError(libraryName + " library not found.");
+        } else {
+            var library = libraryStorage[libraryName];
+            if (library.isLoaded === false) {
+                var activeDependency = library.dependencies.map(function (dependency) {
+                    return librarySystem(dependency);
+                });
+                library.isLoaded = true;
+                library.result = library.callback.apply(null, activeDependency);
+            }
+            return library.result;
+        }
     }
-  }
 
   window.librarySystem = librarySystem;
 
 })();
 
-tests ({
-  'It should return a library when no dependencies argument/array is provided.': function() {
-    librarySystem('noDepArg', function() {
-      return 'Library with no dependencies argument';
-    })
-    eq(librarySystem('noDepArg'), 'Library with no dependencies argument');
-  },
-  'It should return a library when its dependencies array is empty.': function(){
-    librarySystem('emptyArray', [], function() {
-      return 1;
-    });
-    eq(1, librarySystem('emptyArray'));
-  },
-  'It should return a library when its dependencies array contains one item.': function(){
-    librarySystem('emptyArray', [], function() {
-      return 1;
-    });
-    librarySystem('oneItemArray', ['emptyArray'], function(emptyArray) {
-      return emptyArray + 1;
-    });
-    eq(2, librarySystem('oneItemArray'));
-  },
-  'It should return a library when its dependencies array contains two (or more) items.': function(){
-    librarySystem('emptyArray1', [], function() {
-      return 1;
-    });
-    librarySystem('emptyArray2', [], function() {
-      return 1;
-    });
-    librarySystem('emptyArray3', [], function() {
-      return 1;
-    });
-    librarySystem('multipleArrayItems', ['emptyArray1', 'emptyArray2', 'emptyArray3'], function(emptyArray1, emptyArray2, emptyArray3) {
-      return emptyArray1 + emptyArray2 + emptyArray3;
-    });
-    eq(3, librarySystem('multipleArrayItems'));
-  },
-  'It should allow libraries to be created out of order.': function(){
-    librarySystem('first', ['second', 'third'], function(second, third) {
-      return 1 + second + third;
-    });
-    librarySystem('second', [], function() {
-      return 1;
-    });
-    librarySystem('third', [], function() {
-      return 1;
-    });
-    eq(3, librarySystem('first'));
-  },
-  'It should throw a TypeError if a library has not been defined before is it called.' : function () {
-      var catchError;
-      try {
-          librarySystem('notDefined');
-      } 
-      catch (e) {
-          catchError = (e instanceof TypeError);
-      }
-      eq(catchError, true);
-  },
-  'It should ensure that the callback function for each library is run only once.': function(){
-    var counter = 0;
-    librarySystem('onlyOnce', [], function() {
-      counter++;
-    });
-    librarySystem('onlyOnce');
-    librarySystem('onlyOnce');
-    eq(1, counter);
-  }
- }); 
+tests({
+    "It should return a library when no dependencies argument/array is provided.": function () {
+        librarySystem("noDepArg", function () {
+            return "Library with no dependencies argument";
+        });
+       eq(librarySystem("noDepArg"), "Library with no dependencies argument");
+    },
+    "It should return a library when its dependencies array is empty.": function () {
+        librarySystem("emptyArray", [], function () {
+            return 1;
+        });
+       eq(1, librarySystem("emptyArray"));
+    },
+    "It should return a library when its dependencies array contains one item.": function () {
+        librarySystem("emptyArray", [], function () {
+            return 1;
+        });
+        librarySystem("oneItemArray", ["emptyArray"], function (emptyArray) {
+            return emptyArray + 1;
+        });
+       eq(2, librarySystem("oneItemArray"));
+    },
+    "It should return a library when its dependencies array contains two (or more) items.": function () {
+        librarySystem("emptyArray1", [], function () {
+            return 1;
+        });
+        librarySystem("emptyArray2", [], function () {
+            return 1;
+        });
+        librarySystem("emptyArray3", [], function () {
+            return 1;
+        });
+        librarySystem("multipleArrayItems", ["emptyArray1", "emptyArray2", "emptyArray3"], function (emptyArray1, emptyArray2, emptyArray3) {
+            return emptyArray1 + emptyArray2 + emptyArray3;
+        });
+        eq(3, librarySystem("multipleArrayItems"));
+    },
+    "It should allow libraries to be created out of order.": function () {
+        librarySystem("first", ["second", "third"], function (second, third) {
+            return 1 + second + third;
+        });
+        librarySystem("second", [], function () {
+            return 1;
+        });
+        librarySystem("third", [], function () {
+            return 1;
+        });
+        eq(3, librarySystem("first"));
+    },
+    "It should throw a TypeError if a library has not been defined before is it called.": function () {
+        var catchError;
+        try {
+            librarySystem("notDefined");
+        } catch (e) {
+            catchError = (e instanceof TypeError);
+        }
+        eq(catchError, true);
+    },
+    "It should ensure that the callback function for each library is run only once.": function () {
+        var counter = 0;
+        librarySystem("onlyOnce", [], function () {
+            counter++;
+        });
+        librarySystem("onlyOnce");
+        librarySystem("onlyOnce");
+        eq(1, counter);
+    }
+});
 
 </script>
+
